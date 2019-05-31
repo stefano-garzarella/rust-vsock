@@ -1,0 +1,11 @@
+[package]
+name = "vsock"
+version = "0.1.0"
+authors = ["Stefano Garzarella <sgarzare@redhat.com>"]
+edition = "2018"
+
+[dependencies]
+nix = ""
+libc = ""
+errno = ""
+clap = ""
