@@ -39,6 +39,10 @@ impl Vsock {
         Vsock { fd: socket_fd, }
     }
 
+    pub fn raw_fd(&self) -> RawFd {
+        self.fd
+    }
+
     pub fn connect(&self, cid: i32, port: i32) -> Result<()> {
 
         let res = unsafe {
