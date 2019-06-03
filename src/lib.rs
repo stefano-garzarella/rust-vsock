@@ -25,6 +25,22 @@ unsafe fn sockaddr_vm(cid: i32, port: i32) -> (sockaddr_vm, libc::socklen_t) {
     (addr, mem::size_of::<sockaddr_vm>() as libc::socklen_t)
 }
 
+pub struct VsockCid {}
+
+impl VsockCid {
+
+    pub fn any() -> i32 {
+        std::u32::MAX as i32
+    }
+
+    pub fn hypervisor() -> i32 {
+        0
+    }
+
+    pub fn host() -> i32 {
+        0
+    }
+}
 
 pub struct Vsock {
     fd: RawFd
