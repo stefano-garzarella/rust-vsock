@@ -3,13 +3,13 @@ use nix::sys::epoll;
 use std::io;
 use std::io::{Read, Write};
 use std::os::unix::io::AsRawFd;
-use vsock::Vsock;
+use vsock::{Vsock, VsockCid};
 use clap::{Arg, App, value_t, crate_authors, crate_version};
 
 const EVENT_REMOTE_IN: u64 = 1;
 const EVENT_STDIN_IN: u64 = 2;
 
-fn run(vsock: &Vsock) {
+fn nc_vsock(vsock: &Vsock) {
     let mut event;
 
     let epoll_fd = epoll::epoll_create().unwrap();
@@ -64,31 +64,49 @@ fn main() {
         .author(crate_authors!())
         .about("VSOCK demo app -  nc like tool")
         .arg(
-            Arg::with_name("port")
-                .long("port")
-                .short("p")
+            Arg::with_name("listen_port")
+                .long("listen")
+                .short("l")
                 .takes_value(true)
-                .required(true)
-                .help("Port to connect"),
+                .group("input")
+                .help("Bind and listen for incoming connections"),
         )
         .arg(
-            Arg::with_name("cid")
-                .long("cid")
-                .short("c")
+            Arg::with_name("remote_cid")
                 .takes_value(true)
-                .required(true)
-                .help("Remote cid"),
+                .index(1)
+                .requires("remote_port")
+                .group("input")
+                .help("Remote cid to connect to"),
+        )
+        .arg(
+            Arg::with_name("remote_port")
+                .takes_value(true)
+                .index(2)
+                .help("Remote port to connect to"),
         )
         .get_matches();
 
-    let port = value_t!(cmd_args.value_of("port"), i32).unwrap();
-    let cid = value_t!(cmd_args.value_of("cid"), i32).unwrap();
+    let mut vsock = Vsock::new();
 
-    let vsock = Vsock::new();
-    vsock.connect(cid, port).expect("Unable to connect");
+    if cmd_args.is_present("listen_port") {
+        let port = value_t!(cmd_args.value_of("listen_port"), i32).unwrap();
 
-    let (name_cid, name_port) = vsock.getsockname().unwrap();
+        vsock.bind(VsockCid::any(), port).unwrap();
+        vsock.listen(1).expect("Unable to listen");
+        vsock = vsock.accept().unwrap();
 
-    println!("Connected to {0} port {1}", name_cid, name_port);
-    run(&vsock);
+        let (name_cid, name_port) = vsock.getpeername().unwrap();
+        println!("Connection from cid {0} port {1}...", name_cid, name_port);
+    } else {
+        let port = value_t!(cmd_args.value_of("remote_port"), i32).unwrap();
+        let cid = value_t!(cmd_args.value_of("remote_cid"), i32).unwrap();
+
+        vsock.connect(cid, port).expect("Unable to connect");
+
+        let (name_cid, name_port) = vsock.getsockname().unwrap();
+        println!("Connection to cid {0} port {1}...", name_cid, name_port);
+    }
+
+    nc_vsock(&vsock);
 }
