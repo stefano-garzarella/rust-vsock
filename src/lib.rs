@@ -99,6 +99,21 @@ impl Vsock {
         return Ok((addr.svm_cid, addr.svm_port));
     }
 
+    pub fn getpeername(&self) -> Result<(i32, i32)> {
+        let addr: sockaddr_vm;
+
+        let res = unsafe {
+            addr =  mem::zeroed();
+            let mut addrlen: libc::socklen_t = mem::size_of::<sockaddr_vm>()
+                                               as libc::socklen_t;
+            libc::getpeername(self.fd, mem::transmute(&addr), &mut addrlen)
+        };
+
+        Errno::result(res)?;
+
+        return Ok((addr.svm_cid, addr.svm_port));
+    }
+
     pub fn listen(&self, backlog: usize) -> Result<()> {
         socket::listen(self.fd, backlog)
     }
