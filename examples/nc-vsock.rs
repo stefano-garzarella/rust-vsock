@@ -4,7 +4,7 @@ use std::io;
 use std::io::{Read, Write};
 use std::os::unix::io::AsRawFd;
 use vsock::{Vsock, VsockCid};
-use clap::{Arg, App, value_t, crate_authors, crate_version};
+use clap::{Arg, ArgGroup, App, value_t, crate_authors, crate_version};
 
 const EVENT_REMOTE_IN: u64 = 1;
 const EVENT_STDIN_IN: u64 = 2;
@@ -62,7 +62,9 @@ fn main() {
     let cmd_args = App::new("nc-vsock")
         .version(crate_version!())
         .author(crate_authors!())
-        .about("VSOCK demo app -  nc like tool")
+        .about("VSOCK Rust demo app -  nc like tool")
+        .group(ArgGroup::with_name("input")
+                    .required(true))
         .arg(
             Arg::with_name("listen_port")
                 .long("listen")
