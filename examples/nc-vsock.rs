@@ -92,7 +92,7 @@ fn main() {
     let mut vsock = Vsock::new();
 
     if cmd_args.is_present("listen_port") {
-        let port = value_t!(cmd_args.value_of("listen_port"), i32).unwrap();
+        let port = value_t!(cmd_args.value_of("listen_port"), u32).unwrap();
 
         vsock.bind(VsockCid::any(), port).unwrap();
         vsock.listen(1).expect("Unable to listen");
@@ -101,8 +101,8 @@ fn main() {
         let (name_cid, name_port) = vsock.getpeername().unwrap();
         println!("Connection from cid {0} port {1}...", name_cid, name_port);
     } else {
-        let port = value_t!(cmd_args.value_of("remote_port"), i32).unwrap();
-        let cid = value_t!(cmd_args.value_of("remote_cid"), i32).unwrap();
+        let port = value_t!(cmd_args.value_of("remote_port"), u32).unwrap();
+        let cid = value_t!(cmd_args.value_of("remote_cid"), u32).unwrap();
 
         vsock.connect(cid, port).expect("Unable to connect");
 

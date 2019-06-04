@@ -9,7 +9,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate bytefmt;
 
-const IPERF_DEFAULT_PORT: i32 = 5201;
+const IPERF_DEFAULT_PORT: u32 = 5201;
 
 enum IperfMsgOpCode {
     Start = 1,
@@ -196,7 +196,7 @@ fn main() {
     let vsock = Vsock::new();
     let mut istate = IperfState::default();
 
-    let port = value_t!(cmd_args.value_of("port"), i32)
+    let port = value_t!(cmd_args.value_of("port"), u32)
                 .unwrap_or(IPERF_DEFAULT_PORT);
 
     if cmd_args.is_present("server") {
@@ -223,7 +223,7 @@ fn main() {
     } else {
         istate.mode = IperfMode::Client;
 
-        let cid = value_t!(cmd_args.value_of("client"), i32).unwrap();
+        let cid = value_t!(cmd_args.value_of("client"), u32).unwrap();
         let length = cmd_args.value_of("length").unwrap_or("128KiB");
         istate.time = value_t!(cmd_args.value_of("time"), u64).unwrap_or(10);
         istate.buf_len = bytefmt::parse(length).unwrap() as usize;

@@ -9,13 +9,14 @@ use std::os::unix::io::RawFd;
 #[repr(C)]
 pub struct sockaddr_vm {
     pub svm_family: libc::sa_family_t,
-    pub svm_reserved1: u16,
-    pub svm_port: i32,
-    pub svm_cid: i32,
+    pub svm_reserved1: libc::c_ushort,
+    pub svm_port: libc::c_uint,
+    pub svm_cid: libc::c_uint,
     pub svm_zero: [u8; 4],
 }
 
-unsafe fn sockaddr_vm(cid: i32, port: i32) -> (sockaddr_vm, libc::socklen_t) {
+
+unsafe fn sockaddr_vm(cid: u32, port: u32) -> (sockaddr_vm, libc::socklen_t) {
     let mut addr: sockaddr_vm = mem::zeroed();
     addr.svm_family = libc::AF_VSOCK as libc::sa_family_t;
 
@@ -29,8 +30,8 @@ pub struct VsockCid {}
 
 impl VsockCid {
 
-    pub fn any() -> i32 {
-        std::u32::MAX as i32
+    pub fn any() -> u32 {
+        std::u32::MAX
     }
 
     pub fn hypervisor() -> i32 {
@@ -59,7 +60,7 @@ impl Vsock {
         self.fd
     }
 
-    pub fn connect(&self, cid: i32, port: i32) -> Result<()> {
+    pub fn connect(&self, cid: u32, port: u32) -> Result<()> {
 
         let res = unsafe {
             let (addr, len) = sockaddr_vm(cid, port);
@@ -75,7 +76,7 @@ impl Vsock {
         Ok(Vsock {fd: client_fd})
     }
 
-    pub fn bind(&self, cid: i32, port: i32) -> Result<()> {
+    pub fn bind(&self, cid: u32, port: u32) -> Result<()> {
         let res = unsafe {
             let (addr, len) = sockaddr_vm(cid, port);
             libc::bind(self.fd, mem::transmute(&addr), len)
@@ -84,7 +85,7 @@ impl Vsock {
         return Errno::result(res).map(drop);
     }
 
-    pub fn getsockname(&self) -> Result<(i32, i32)> {
+    pub fn getsockname(&self) -> Result<(u32, u32)> {
         let addr: sockaddr_vm;
 
         let res = unsafe {
@@ -99,7 +100,7 @@ impl Vsock {
         return Ok((addr.svm_cid, addr.svm_port));
     }
 
-    pub fn getpeername(&self) -> Result<(i32, i32)> {
+    pub fn getpeername(&self) -> Result<(u32, u32)> {
         let addr: sockaddr_vm;
 
         let res = unsafe {
