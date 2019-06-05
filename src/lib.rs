@@ -4,26 +4,14 @@ use nix::sys::socket;
 use std::mem;
 use std::os::unix::io::RawFd;
 
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct sockaddr_vm {
-    pub svm_family: libc::sa_family_t,
-    pub svm_reserved1: libc::c_ushort,
-    pub svm_port: libc::c_uint,
-    pub svm_cid: libc::c_uint,
-    pub svm_zero: [u8; 4],
-}
-
-
-unsafe fn sockaddr_vm(cid: u32, port: u32) -> (sockaddr_vm, libc::socklen_t) {
-    let mut addr: sockaddr_vm = mem::zeroed();
+unsafe fn sockaddr_vm(cid: u32, port: u32) -> (libc::sockaddr_vm, libc::socklen_t) {
+    let mut addr: libc::sockaddr_vm = mem::zeroed();
     addr.svm_family = libc::AF_VSOCK as libc::sa_family_t;
 
     addr.svm_port = port;
     addr.svm_cid = cid;
 
-    (addr, mem::size_of::<sockaddr_vm>() as libc::socklen_t)
+    (addr, mem::size_of::<libc::sockaddr_vm>() as libc::socklen_t)
 }
 
 pub struct VsockCid {}
@@ -31,7 +19,7 @@ pub struct VsockCid {}
 impl VsockCid {
 
     pub fn any() -> u32 {
-        std::u32::MAX
+        libc::VMADDR_CID_ANY
     }
 
     pub fn hypervisor() -> i32 {
@@ -86,11 +74,11 @@ impl Vsock {
     }
 
     pub fn getsockname(&self) -> Result<(u32, u32)> {
-        let addr: sockaddr_vm;
+        let addr: libc::sockaddr_vm;
 
         let res = unsafe {
             addr =  mem::zeroed();
-            let mut addrlen: libc::socklen_t = mem::size_of::<sockaddr_vm>()
+            let mut addrlen: libc::socklen_t = mem::size_of::<libc::sockaddr_vm>()
                                                as libc::socklen_t;
             libc::getsockname(self.fd, mem::transmute(&addr), &mut addrlen)
         };
@@ -101,11 +89,11 @@ impl Vsock {
     }
 
     pub fn getpeername(&self) -> Result<(u32, u32)> {
-        let addr: sockaddr_vm;
+        let addr: libc::sockaddr_vm;
 
         let res = unsafe {
             addr =  mem::zeroed();
-            let mut addrlen: libc::socklen_t = mem::size_of::<sockaddr_vm>()
+            let mut addrlen: libc::socklen_t = mem::size_of::<libc::sockaddr_vm>()
                                                as libc::socklen_t;
             libc::getpeername(self.fd, mem::transmute(&addr), &mut addrlen)
         };

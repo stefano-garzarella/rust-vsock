@@ -6,7 +6,8 @@ edition = "2018"
 
 [dependencies]
 nix = ">=0.14.0"
-libc = ">=0.2.55"
+#libc = ">=0.2.55"
+libc = { git = "https://github.com/stefano-garzarella/libc.git", branch="vsock" }
 errno = ">=0.2.4"
 # Used by examples
 clap = ">=2.33.0"
