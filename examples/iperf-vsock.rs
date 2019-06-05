@@ -111,7 +111,8 @@ fn iperf_receiver(istate: &mut IperfState, vsock: &Vsock) {
         assert_eq!(msg.opcode, IperfMsgOpCode::Data as u64);
 
         while received < buf_len {
-            received += vsock.recv(&mut buf [0 .. buf_len - received], socket::MsgFlags::empty()).unwrap();
+            received += vsock.recv(&mut buf [0 .. buf_len - received],
+                                   socket::MsgFlags::MSG_WAITALL).unwrap();
         }
 
         istate.bytes += received as u64;

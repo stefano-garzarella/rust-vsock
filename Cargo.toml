@@ -5,7 +5,8 @@ authors = ["Stefano Garzarella <sgarzare@redhat.com>"]
 edition = "2018"
 
 [dependencies]
-nix = ">=0.14.0"
+#nix = ">=0.14.0"
+nix = { git = "https://github.com/stefano-garzarella/nix.git", branch="waitall" }
 #libc = ">=0.2.55"
 libc = { git = "https://github.com/stefano-garzarella/libc.git", branch="vsock" }
 errno = ">=0.2.4"
