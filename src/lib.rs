@@ -1,19 +1,9 @@
 use nix::errno::Errno;
-use nix::Result;
-use nix::sys::socket::{AddressFamily, SockType, SockFlag, MsgFlags};
-use nix::sys::socket::{socket, listen, accept, send, recv};
-use std::mem;
+use nix::{Result, Error};
+use nix::sys::socket::{AddressFamily, SockType, SockFlag, SockAddr, MsgFlags};
+use nix::sys::socket::{socket, bind, connect, listen, accept, send, recv,
+                       getsockname, getpeername};
 use std::os::unix::io::RawFd;
-
-unsafe fn sockaddr_vm(cid: u32, port: u32) -> (libc::sockaddr_vm, libc::socklen_t) {
-    let mut addr: libc::sockaddr_vm = mem::zeroed();
-    addr.svm_family = libc::AF_VSOCK as libc::sa_family_t;
-
-    addr.svm_port = port;
-    addr.svm_cid = cid;
-
-    (addr, mem::size_of::<libc::sockaddr_vm>() as libc::socklen_t)
-}
 
 pub struct VsockCid {}
 
@@ -48,13 +38,9 @@ impl Vsock {
     }
 
     pub fn connect(&self, cid: u32, port: u32) -> Result<()> {
+        let sockaddr = SockAddr::new_vsock(cid, port);
 
-        let res = unsafe {
-            let (addr, len) = sockaddr_vm(cid, port);
-            libc::connect(self.fd, mem::transmute(&addr), len)
-        };
-
-        return Errno::result(res).map(drop);
+        return connect(self.fd, &sockaddr);
     }
 
     pub fn accept(&self) -> Result<Vsock> {
@@ -64,42 +50,29 @@ impl Vsock {
     }
 
     pub fn bind(&self, cid: u32, port: u32) -> Result<()> {
-        let res = unsafe {
-            let (addr, len) = sockaddr_vm(cid, port);
-            libc::bind(self.fd, mem::transmute(&addr), len)
-        };
+        let sockaddr = SockAddr::new_vsock(cid, port);
 
-        return Errno::result(res).map(drop);
+        return bind(self.fd, &sockaddr);
     }
 
     pub fn getsockname(&self) -> Result<(u32, u32)> {
-        let addr: libc::sockaddr_vm;
+        let sockaddr = getsockname(self.fd)?;
 
-        let res = unsafe {
-            addr =  mem::zeroed();
-            let mut addrlen: libc::socklen_t = mem::size_of::<libc::sockaddr_vm>()
-                                               as libc::socklen_t;
-            libc::getsockname(self.fd, mem::transmute(&addr), &mut addrlen)
-        };
-
-        Errno::result(res)?;
-
-        return Ok((addr.svm_cid, addr.svm_port));
+        if let SockAddr::Vsock(addr) = sockaddr {
+            return Ok((addr.cid(), addr.port()));
+        } else {
+            return Err(Error::Sys(Errno::EINVAL));
+        }
     }
 
     pub fn getpeername(&self) -> Result<(u32, u32)> {
-        let addr: libc::sockaddr_vm;
+        let sockaddr = getpeername(self.fd)?;
 
-        let res = unsafe {
-            addr =  mem::zeroed();
-            let mut addrlen: libc::socklen_t = mem::size_of::<libc::sockaddr_vm>()
-                                               as libc::socklen_t;
-            libc::getpeername(self.fd, mem::transmute(&addr), &mut addrlen)
-        };
-
-        Errno::result(res)?;
-
-        return Ok((addr.svm_cid, addr.svm_port));
+        if let SockAddr::Vsock(addr) = sockaddr {
+            return Ok((addr.cid(), addr.port()));
+        } else {
+            return Err(Error::Sys(Errno::EINVAL));
+        }
     }
 
     pub fn listen(&self, backlog: usize) -> Result<()> {
