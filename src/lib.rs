@@ -23,12 +23,12 @@ impl VsockCid {
         libc::VMADDR_CID_ANY
     }
 
-    pub fn hypervisor() -> i32 {
-        0
+    pub fn hypervisor() -> u32 {
+        libc::VMADDR_CID_HYPERVISOR
     }
 
-    pub fn host() -> i32 {
-        0
+    pub fn host() -> u32 {
+        libc::VMADDR_CID_HOST
     }
 }
 
