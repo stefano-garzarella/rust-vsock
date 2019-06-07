@@ -1,6 +1,7 @@
 use nix::errno::Errno;
 use nix::Result;
-use nix::sys::socket;
+use nix::sys::socket::{AddressFamily, SockType, SockFlag, MsgFlags};
+use nix::sys::socket::{socket, listen, accept, send, recv};
 use std::mem;
 use std::os::unix::io::RawFd;
 
@@ -37,10 +38,8 @@ pub struct Vsock {
 
 impl Vsock {
     pub fn new() -> Self {
-        let socket_fd = socket::socket(socket::AddressFamily::Vsock,
-                                       socket::SockType::Stream,
-                                       socket::SockFlag::empty(),
-                                       None).unwrap();
+        let socket_fd = socket(AddressFamily::Vsock, SockType::Stream,
+                               SockFlag::empty(), None).unwrap();
         Vsock { fd: socket_fd, }
     }
 
@@ -59,7 +58,7 @@ impl Vsock {
     }
 
     pub fn accept(&self) -> Result<Vsock> {
-        let client_fd = socket::accept(self.fd)?;
+        let client_fd = accept(self.fd)?;
 
         Ok(Vsock {fd: client_fd})
     }
@@ -104,15 +103,15 @@ impl Vsock {
     }
 
     pub fn listen(&self, backlog: usize) -> Result<()> {
-        socket::listen(self.fd, backlog)
+        listen(self.fd, backlog)
     }
 
-    pub fn recv(&self, buf: &mut [u8], flags: socket::MsgFlags) -> Result<usize> {
-        socket::recv(self.fd, buf, flags)
+    pub fn recv(&self, buf: &mut [u8], flags: MsgFlags) -> Result<usize> {
+        recv(self.fd, buf, flags)
     }
 
-    pub fn send(&self, buf: &[u8], flags: socket::MsgFlags) -> Result<usize> {
-        socket::send(self.fd, buf, flags)
+    pub fn send(&self, buf: &[u8], flags: MsgFlags) -> Result<usize> {
+        send(self.fd, buf, flags)
     }
 }
 
