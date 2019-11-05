@@ -5,9 +5,7 @@ authors = ["Stefano Garzarella <sgarzare@redhat.com>"]
 edition = "2018"
 
 [dependencies]
-#nix = "0.14.0"
-nix = { git = "https://github.com/nix-rust/nix" }
-libc = { git = "https://github.com/rust-lang/libc", features = [ "extra_traits" ] }
+nix = "0.15.0"
 errno = "0.2.4"
 # Used by examples
 clap = "2.33.0"
@@ -15,3 +13,7 @@ bytefmt = ""
 serde = ""
 serde_derive = ""
 bincode = ""
+
+[dependencies.libc]
+version = "0.2.59"
+features = [ "extra_traits" ]
